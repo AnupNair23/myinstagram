@@ -8,7 +8,7 @@ module.exports = {
         if (authorizationHeaader) {
             const token = req.headers.authorization.split(' ')[1]; // Bearer <token>
             const options = {
-                expiresIn: '1h'
+                expiresIn: '3h'
             };
             try {
                 // verify makes sure that the token hasn't expired and has been issued by us
@@ -16,6 +16,7 @@ module.exports = {
 
                 // Let's pass back the decoded token to the request object
                 req.decoded = result;
+                console.log('result ===== ', result);
                 // We call next to pass execution to the subsequent middleware
                 next();
             } catch (err) {
@@ -30,4 +31,6 @@ module.exports = {
             res.status(401).send(result);
         }
     }
+
+
 };

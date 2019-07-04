@@ -1,23 +1,22 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-var UserSchema = new Schema({
+var ImageSchema = new Schema({
     name: {
         type: String,
         required: true,
-        max: 100
+        max: 100,
+        unique: true
     },
-   emailId: {
-        type: String,
-        required: true
-    },
-    password:  {
-        type: String,
-        required: true
-    },
-    imagesLiked: {
+    usersLikes: {
         type: Array,
-        default: []
+        default: [],
+        unique: true
+    },
+
+    urlImage: {
+        type: String,
+        required: true
     }
 
 
@@ -25,5 +24,5 @@ var UserSchema = new Schema({
 
 
 // Export the model
-module.exports = mongoose.model('UserSchema', UserSchema);
+module.exports = mongoose.model('ImageSchema', ImageSchema);
 // module.exports = CustomerModel;
