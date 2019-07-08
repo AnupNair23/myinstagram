@@ -133,6 +133,7 @@ exports.likePost = function (req, res) {
 
 
     console.log('check this body', req.body);
+    let isThere = false;
 
     const token = req.headers.authorization.split(' ')[1];
     try {
@@ -157,51 +158,72 @@ exports.likePost = function (req, res) {
                 function (err, image) {
                     if (err)
                         console.log(err)
-                    console.log('coming here or what?', image)
-                    if (image == null) {
-                        console.log('image is null');
-                        var imageModel = new ImageModel({
-                            "name": req.body.name,
-                            "urlImage": req.body.url
-                        });
-                        let body = {
-                            userId: user._id,
-                            name: user.name
-                        }
-                        console.log('check ====', body);
-                        imageModel.usersLikes.push(body);
-                        imageModel.save(function (err) {
-                            if (err)
-                                console.log(err);
+                    console.log('coming here or what?', image);
 
-                            console.log('yes got saved');
-                        })
+                    image.usersLikes.map((likedUser) => {
+                        console.log(likedUser);
+
+                        if (likedUser.userId == userId) {
+                            console.log('he is in here boy');
+                            isThere = true;
+                        }
+                    })
+
+                    console.log('check isThere', isThere);
+
+                    if (isThere == false) {
+                        if (image == null) {
+                            console.log('image is null');
+                            var imageModel = new ImageModel({
+                                "name": req.body.name,
+                                "urlImage": req.body.url
+                            });
+                            let body = {
+                                userId: user._id,
+                                name: user.name
+                            }
+                            console.log('check ====', body);
+                            imageModel.usersLikes.push(body);
+                            imageModel.save(function (err) {
+                                if (err)
+                                    console.log(err);
+
+                                console.log('yes got saved');
+                            })
+                        } else {
+                            let body = {
+                                userId: user._id,
+                                name: user.name
+                            }
+                            console.log('check ====', body);
+                            // imageModel.usersLikes.push(body);
+                            image.usersLikes.push(body);
+                            image.save(function (err) {
+                                if (err)
+                                    console.log(err);
+
+                                console.log('yes got saved');
+                            })
+
+                            user.imagesLiked.push(req.body);
+                            user.save(function (err) {
+                                if (err)
+                                    console.log(err)
+                                console.log(res);
+                                let resp = {
+                                    status: 200,
+                                    message: 'User successfully liked the post',
+                                }
+                                return res.json(resp);
+                            })
+                        }
                     } else {
                         let body = {
-                            userId: user._id,
-                            name: user.name
+                            status: 400,
+                            message: "user already liked the post"
                         }
-                        console.log('check ====', body);
-                        // imageModel.usersLikes.push(body);
-                        image.usersLikes.push(body);
-                        image.save(function (err) {
-                            if (err)
-                                console.log(err);
 
-                            console.log('yes got saved');
-                        })
-
-                        user.imagesLiked.push(req.body);
-                        user.save(function (err) {
-                            if (err)
-                                console.log(err)
-                            console.log(res);
-                            let resp = {
-                                status: 200,
-                                message: 'User successfully liked the post',
-                            }
-                            return res.json(resp);
-                        })
+                        return res.json(body);
                     }
                 })
 
@@ -212,6 +234,7 @@ exports.likePost = function (req, res) {
 exports.dislike = function (req, res) {
     console.log('body ===== ', req.body);
 
+    let isThere = false;
     const token = req.headers.authorization.split(' ')[1];
     try {
         decoded = jwt.verify(token, req.app.get('secretKey'));
@@ -225,67 +248,87 @@ exports.dislike = function (req, res) {
     }, function (err, user) {
         if (err)
             console.log(err);
-
-        console.log(user.imagesLiked.length);
-        let imagesLiked = user.imagesLiked.slice();
-        // let i = 0;
-        user.imagesLiked.map((image, index) => {
-            // var i = 0;
-            console.log(index);
-            if (image.name.toString() === req.body.name.toString()) {
-                console.log('cutting')
-                imagesLiked.splice(index, 1)
-            }
-
-            // i++;
-        })
-
         ImageModel.findOne({
             name: req.body.name
         }, function (err, image) {
             if (err)
                 console.log(err);
 
-            console.log('check this image ==== ', image);
-            let userLikes = image.usersLikes.slice();
-            image.usersLikes.map((image2, index) => {
-                console.log(index);
-                console.log('check this image out boys --', image2, userId);
-                if (image2.toString() === userId.toString()) {
-                    console.log('cutting')
-                    userLikes.splice(index, 1);
+            image.usersLikes.map((image) => {
+                if (image.userId == userId) {
+                    isThere = true;
                 }
-                console.log(userLikes)
             })
-            console.log('outside scope userlikes === ', userLikes)
-            image.usersLikes = userLikes;
 
-            image.save(function (err) {
-                if (err)
-                    console.log(err);
+            if (isThere == true) {
 
-                console.log('image is also saved', image)
-            })
-        })
+                console.log('check this image ==== ', image);
+                let userLikes = image.usersLikes.slice();
+                image.usersLikes.map((image2, index) => {
+                    console.log(index);
+                    console.log('check this image out boys --', image2, userId);
+                    if (image2.userId == userId) {
+                        console.log('cutting', index)
+                        userLikes.splice(index, 1);
+                    }
+                    console.log(userLikes)
+                })
+                console.log('outside scope userlikes === ', userLikes)
+                image.usersLikes = userLikes;
 
-        console.log('ithaano', imagesLiked);
+                image.save(function (err) {
+                    if (err)
+                        console.log(err);
 
-        user.imagesLiked = imagesLiked;
+                    console.log('image is also saved', image)
+                })
+
+                let imagesLiked = user.imagesLiked.slice();
+                // let i = 0;
 
 
-        user.save(function (err) {
-            if (err)
-                console.log(err)
-            console.log(res);
-            let resp = {
-                status: 200,
-                message: 'User successfully disliked the post',
+                user.imagesLiked.map((image, index) => {
+                    // var i = 0;
+                    console.log(index);
+                    if (image.name.toString() === req.body.name.toString()) {
+                        console.log('cutting')
+                        imagesLiked.splice(index, 1)
+                    }
+
+                    // i++;
+                })
+
+                user.imagesLiked = imagesLiked;
+
+
+                user.save(function (err) {
+                    if (err)
+                        console.log(err)
+                    console.log(res);
+                    let resp = {
+                        status: 200,
+                        message: 'User successfully disliked the post',
+                    }
+                    return res.json(resp);
+                })
+
             }
-            return res.json(resp);
+
+            else {
+                let body = {
+                    status: 400,
+                    message: "user has not liked this photo"
+                }
+
+                return res.json(body);
+            }
+
         })
 
     })
+
 }
+
 
 exports.getPosts = function (req, res) {
 
