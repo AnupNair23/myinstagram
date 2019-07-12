@@ -74,7 +74,6 @@ exports.signIn = function (req, res, next) {
                     status: 200,
                     message: "User signIn Successfull",
                     data: {
-                        user: userInfo,
                         token: token
                     }
                 });
@@ -159,15 +158,15 @@ exports.likePost = function (req, res) {
                     if (err)
                         console.log(err)
                     console.log('coming here or what?', image);
-
-                    image.usersLikes.map((likedUser) => {
-                        console.log(likedUser);
-
-                        if (likedUser.userId == userId) {
-                            console.log('he is in here boy');
-                            isThere = true;
-                        }
-                    })
+                    if (image != null) {
+                        image.usersLikes.map((likedUser) => {
+                            console.log('check user please ===== ',likedUser);
+                            if (likedUser.email.toString() === user.emailId.toString()) {
+                                console.log('he is in here boy');
+                                isThere = true;
+                            }
+                        })
+                    }
 
                     console.log('check isThere', isThere);
 
@@ -176,11 +175,13 @@ exports.likePost = function (req, res) {
                             console.log('image is null');
                             var imageModel = new ImageModel({
                                 "name": req.body.name,
-                                "urlImage": req.body.url
+                                "urlImage": req.body.url,
+                                
                             });
                             let body = {
-                                userId: user._id,
-                                name: user.name
+                                name: user.name,
+                                email: user.emailId,
+                                value: Math.random()
                             }
                             console.log('check ====', body);
                             imageModel.usersLikes.push(body);
@@ -189,11 +190,18 @@ exports.likePost = function (req, res) {
                                     console.log(err);
 
                                 console.log('yes got saved');
+
                             })
+                            let resp = {
+                                status: 200,
+                                message: 'User successfully liked the post',
+                            }
+                            return res.json(resp);
                         } else {
                             let body = {
-                                userId: user._id,
-                                name: user.name
+                                name: user.name,
+                                email: user.emailId,
+                                value: Math.random()
                             }
                             console.log('check ====', body);
                             // imageModel.usersLikes.push(body);
@@ -246,6 +254,7 @@ exports.dislike = function (req, res) {
     UserModel.findById({
         _id: userId
     }, function (err, user) {
+        console.log('please check the user', user)
         if (err)
             console.log(err);
         ImageModel.findOne({
@@ -255,7 +264,8 @@ exports.dislike = function (req, res) {
                 console.log(err);
 
             image.usersLikes.map((image) => {
-                if (image.userId == userId) {
+                console.log('check the image === ', image);
+                if (image.email.toString() == user.emailId.toString()) {
                     isThere = true;
                 }
             })
@@ -267,7 +277,7 @@ exports.dislike = function (req, res) {
                 image.usersLikes.map((image2, index) => {
                     console.log(index);
                     console.log('check this image out boys --', image2, userId);
-                    if (image2.userId == userId) {
+                    if (image2.email.toString() == user.emailId.toString()) {
                         console.log('cutting', index)
                         userLikes.splice(index, 1);
                     }
@@ -312,9 +322,7 @@ exports.dislike = function (req, res) {
                     return res.json(resp);
                 })
 
-            }
-
-            else {
+            } else {
                 let body = {
                     status: 400,
                     message: "user has not liked this photo"
